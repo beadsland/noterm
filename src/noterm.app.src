@@ -1,0 +1,20 @@
+%%-*- mode:erlang -*-
+
+%%======================================
+%%
+%% .app file provided to satisfy rebar.
+%%
+%%======================================
+
+{application, noterm,
+ [
+  {description, ""},
+  {vsn, git},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { noterm_app, []}},
+  {env, []}
+ ]}.
