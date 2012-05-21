@@ -68,6 +68,7 @@
 %% @end
 start() -> start(false).
 
+-spec start_wecho() -> no_return().
 %% @doc Start terminal, with nosh echo flag set.
 %%
 %% This is a stopgap measure pending proper terminal emulation.
@@ -78,9 +79,10 @@ start_wecho() -> io:format("Shell echo flag enabled.\n"), start(true).
 %% Local functions
 %%
 
+-spec start() -> no_return().
 start(Echo) ->
   error_logger:tty(false),
-  IO = ?IO(self()),     % hack pending proper pose functions
+  IO = ?IO(self(), self(), self(), Echo),
   ENV = ?ENV,
   ?INIT_POSE,
   io:format("Starting Noterm ~s terminal emulator on ~p ~p~n",
@@ -88,11 +90,22 @@ start(Echo) ->
 
   KeyPid = spawn_link(?MODULE, key_start, [self()]),
 
-  try spawn_link(nosh, run, [?IO(self(), self(), self(), Echo)]) of
-    NoshPid             -> msg_loop(?IO(KeyPid, NoshPid, NoshPid))
-  catch
-    {Message, Reason}   -> grace(Message, Reason), init:stop()
+  Command = nosh,
+  case gen_command:load_command(IO, Command) of
+    {module, Module}    ->
+      NoshPid = spawn_link(Module, do_run, [IO, ?ARG(Command)]),
+      msg_loop(?IO(KeyPid, NoshPid, NoshPid)),
+      exit(ok);
+    {error, What}       ->
+      ?STDERR({Command, What}),
+      exit(What)
   end.
+
+%  try spawn_link(nosh, run, [?IO(self(), self(), self(), Echo)]) of
+%    NoshPid             ->
+%  catch
+%    {Message, Reason}   -> grace(Message, Reason), init:stop()
+%  end.
 
 
 %%@private Export to allow for hotswap.
