@@ -13,5 +13,5 @@ __Authors:__ Beads D. Land-Trujillo (_web site:_ [`http://twitter.com/beadsland`
 
 
 <table width="100%" border="0" summary="list of modules">
-<tr><td><a href="http://github.com/beadsland/noterm/blob/master/doc/noterm.md" class="module">noterm</a></td></tr></table>
+<tr><td><a href="noterm.md" class="module">noterm</a></td></tr></table>
 

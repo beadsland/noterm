@@ -58,8 +58,6 @@ SUPERL	=	-pa deps/pose/ebin -s pose start superl $(POSURE)
 ERLSTOP	=	-s init stop
 NOTERM	=	erl -noshell -i deps $(SUPERL) -pa ebin -s noterm
 
-TODO_MORE	=	`wc -l TODO.edoc | awk '{print $$1 - 7}'`
-
 #
 # Execution rules start
 #
@@ -87,10 +85,11 @@ good:	compile
 
 doc:	compile
 	
-compile:	todo
+compile:
+	@rm -f *.dump
 	@$(CROWBAR:_cmds_=compile doc)
 
-current:	push-libs todo
+current:	push-libs
 	@if [ "$(ONLINE)" == yes ]; then \
 		$(CROWBAR:_cmds_=update-deps compile doc); else \
 		$(CROWBAR:_cmds_=compile doc); fi
@@ -105,12 +104,6 @@ online:
 	@if [ "$(ONLINE)" == yes ]; \
 		then (echo "Working online"); \
 		else (echo "Working offline"); fi
-
-todo:
-	@(head -7 TODO.edoc; \
-	if [ $(TODO_MORE) -gt 0 ]; \
-		then (echo "@todo ...plus $(TODO_MORE) more (see TODO.edoc)"); \
-		fi) > doc/TODO_head.edoc
 
 #
 # Development rules start
