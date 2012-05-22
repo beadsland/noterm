@@ -43,7 +43,7 @@
 %% Include files
 %%
 
-%-define(debug, true).
+-define(debug, true).
 -include("pose/include/interface.hrl").
 
 -include("macro.hrl").
@@ -87,7 +87,7 @@ start(Echo) ->
   io:format("Starting Noterm ~s terminal emulator on ~p ~p~n",
         [?VERSION(?MODULE), node(), self()]),
 
-  KeyPid = spawn_link(?MODULE, key_start, [self()]),
+  KeyPid = spawn_link(keyin, run, [?IO(self()), ?ARG(keyin), ?ENV]),
   io:format("Started keyin ~p~n", [KeyPid]),
 
   Command = nosh,
@@ -99,7 +99,7 @@ start(Echo) ->
       exit(ok);
     {error, What}       ->
       ?STDERR({Command, What}),
-      exit(What)
+      exit({Command, What})
   end.
 
 %  try spawn_link(nosh, run, [?IO(self(), self(), self(), Echo)]) of
@@ -151,11 +151,11 @@ do_keyin(IO, MsgTag, Line) ->
 do_exit(IO, ExitPid, Reason) ->
   case ExitPid of
     Stdin when Stdin == IO#std.in		->
-      ?DEBUG("Stopping shell on keyboard exit", [Reason]),
+      ?DEBUG("Stopping shell on keyboard exit: ~p", [Reason]),
       ?STDOUT("stop\n"),
       ?MODULE:msg_loop(IO);
     Stdout when Stdout == IO#std.out	->
-      grace("Stopping terminal on shell exit", Reason),
+      grace("Stopping terminal on shell exit: ~p", [Reason]),
       init:stop();
     OtherPid                            ->
       ?DEBUG("Saw ~p exit: ~s~n", [OtherPid, ?FORMAT_ERLERR(Reason)]),
