@@ -110,13 +110,13 @@ start(Echo) ->
 
 %%@private Export to allow for hotswap.
 msg_loop(IO) ->
-%  SelfPid = self(),
+  SelfPid = self(),
   receive
     {purging, _Pid, _Mod}		-> ?MODULE:msg_loop(IO);
     {'EXIT', ExitPid, Reason}	-> do_exit(IO, ExitPid, Reason);
     {MsgTag, Stdin, Line}
       when Stdin == IO#std.in 	-> do_keyin(IO, MsgTag, Line);
-%    {MsgTag, SelfPid, Line}     -> do_noshout(IO, MsgTag, Line);
+    {MsgTag, SelfPid, Line}     -> do_noshout(IO, MsgTag, Line);
     {MsgTag, Stdout, Line}
       when Stdout == IO#std.out	-> do_noshout(IO, MsgTag, Line);
     {MsgTag, Stderr, Line}
