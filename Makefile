@@ -62,11 +62,11 @@ NOTERM	=	erl -noshell -i deps $(SUPERL) -pa ebin -s noterm
 # Execution rules start
 #
 
-all:		current push-nosh nosh
+all:		current push-nosh noterm
 
-run:		compile nosh
+run:		compile noterm
 
-nosh:	nodump tabs
+noterm:	nodump tabs
 	@if [ "$(TTY)" == "not a tty" ]; then ($(NOTERM) start_wecho); \
 					 else ($(NOTERM)); fi
 
@@ -89,7 +89,7 @@ compile:
 	@rm -f *.dump
 	@$(CROWBAR:_cmds_=compile doc)
 
-current:	push-libs
+current:
 	@if [ "$(ONLINE)" == yes ]; then \
 		$(CROWBAR:_cmds_=update-deps compile doc); else \
 		$(CROWBAR:_cmds_=compile doc); fi
