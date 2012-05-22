@@ -30,7 +30,6 @@
 %% @author Beads D. Land-Trujillo [http://twitter.com/beadsland]
 %% @copyright 2012 Beads D. Land-Trujillo
 
-%% TODO: io:get_char (see code in jungerl)
 %% TODO: escript and parameters (make it run like any other shell command)
 %% TODO: make fully redistributable (Win/cygwin/*NIX)
 %% TODO: incorporate full terminfo/ncurses support
@@ -63,6 +62,7 @@
 %% API functions
 %%
 
+-spec start() -> no_return().
 %% @doc Start terminal, launching message loop and keyboard listening
 %% process.
 %% @end
@@ -79,7 +79,6 @@ start_wecho() -> io:format("Shell echo flag enabled.\n"), start(true).
 %% Local functions
 %%
 
--spec start() -> no_return().
 start(Echo) ->
   error_logger:tty(false),
   IO = ?IO(self(), self(), self(), Echo),
@@ -157,7 +156,10 @@ do_exit(IO, ExitPid, Reason) ->
       ?MODULE:msg_loop(IO);
     Stdout when Stdout == IO#std.out	->
       grace("Stopping terminal on shell exit", Reason),
-      init:stop()
+      init:stop();
+    OtherPid                            ->
+      ?DEBUG("Saw ~p exit: ~s~n", [OtherPid, ?FORMAT_ERLERR(Reason)]),
+      ?MODULE:msg_loop(IO)
   end.
 
 % Handle message queue noise.

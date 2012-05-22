@@ -11,7 +11,7 @@ Terminal emulator for `nosh`.
 
 Copyright (c) 2012 Beads D. Land-Trujillo
 
-__Version:__ 0.1.5
+__Version:__ 0.1.6
 
 __Authors:__ Beads D. Land-Trujillo (_web site:_ [`http://twitter.com/beadsland`](http://twitter.com/beadsland)).
 
@@ -49,7 +49,9 @@ process.</td></tr><tr><td valign="top"><a href="#start_wecho-0">start_wecho/0</a
 ###start/0##
 
 
-`start() -> any()`
+	start() -&gt; no_return()
+<br></br>
+
 
 Start terminal, launching message loop and keyboard listening
 process.<a name="start_wecho-0"></a>
@@ -57,7 +59,9 @@ process.<a name="start_wecho-0"></a>
 ###start_wecho/0##
 
 
-`start_wecho() -> any()`
+	start_wecho() -&gt; no_return()
+<br></br>
+
 
 
 

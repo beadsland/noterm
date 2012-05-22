@@ -28,6 +28,8 @@
 %% @author Beads D. Land-Trujillo [http://twitter.com/beadsland]
 %% @copyright 2012 Beads D. Land-Trujillo
 
+%% TODO: io:get_char (see code in jungerl)
+
 -define(module, keyin).
 
 % BEGIN POSE PACKAGE PATTERN
