@@ -110,7 +110,6 @@ start(Echo) ->
 
 %%@private Export to allow for hotswap.
 msg_loop(IO) ->
-  SelfPid = self(),
   receive
     {purging, _Pid, _Mod}		-> ?MODULE:msg_loop(IO);
     {'EXIT', ExitPid, Reason}	-> do_exit(IO, ExitPid, Reason);
