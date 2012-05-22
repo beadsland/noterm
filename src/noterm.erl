@@ -36,9 +36,9 @@
 %% TODO: incorporate full terminfo/ncurses support
 %% TODO: notermd - telent/ssh access
 
-%% @version 0.1.5
+%% @version 0.1.6
 -module(noterm).
--version("0.1.5").
+-version("0.1.6").
 
 %%
 %% Include files
@@ -93,7 +93,7 @@ start(Echo) ->
   Command = nosh,
   case gen_command:load_command(IO, Command) of
     {module, Module}    ->
-      NoshPid = spawn_link(Module, do_run, [IO, ?ARG(Command)]),
+      NoshPid = spawn_link(Module, run, [IO]),
       msg_loop(?IO(KeyPid, NoshPid, NoshPid)),
       exit(ok);
     {error, What}       ->
@@ -110,6 +110,7 @@ start(Echo) ->
 
 %%@private Export to allow for hotswap.
 msg_loop(IO) ->
+  SelfPid = self(),
   receive
     {purging, _Pid, _Mod}		-> ?MODULE:msg_loop(IO);
     {'EXIT', ExitPid, Reason}	-> do_exit(IO, ExitPid, Reason);
