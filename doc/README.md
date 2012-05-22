@@ -7,7 +7,8 @@ Copyright (c) 2012 Beads D. Land-Trujillo
 
 __Version:__ 0.1.0
 
-__Authors:__ Beads D. Land-Trujillo (_web site:_ [`http://twitter.com/beadsland`](http://twitter.com/beadsland)).`noterm` is a rudimentary terminal emulator for use with[nosh](http://github.com/beadsland/nosh).
+__Authors:__ Beads D. Land-Trujillo (_web site:_ [`http://twitter.com/beadsland`](http://twitter.com/beadsland)).`noterm` is a rudimentary terminal emulator for use with
+[nosh](http://github.com/beadsland/nosh).
 
 ##Modules##
 

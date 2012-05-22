@@ -1,7 +1,6 @@
 
 
 #Module ?module#
-
 * [Description](#description)
 * [Function Index](#index)
 * [Function Details](#functions)
@@ -14,7 +13,12 @@ Copyright (c) 2012 Beads D. Land-Trujillo
 
 __Behaviours:__ [`gen_command`](gen_command.md).
 
-__Authors:__ Beads D. Land-Trujillo (_web site:_ [`http://twitter.com/beadsland`](http://twitter.com/beadsland)).<a name="index"></a>
+__Authors:__ Beads D. Land-Trujillo (_web site:_ [`http://twitter.com/beadsland`](http://twitter.com/beadsland)).
+
+__<font color="red">To do</font>__
+<br></br>
+* <font color="red"> io:get_char (see code in jungerl)</font>
+<a name="index"></a>
 
 ##Function Index##
 
