@@ -89,11 +89,13 @@ start(Echo) ->
         [?VERSION(?MODULE), node(), self()]),
 
   KeyPid = spawn_link(?MODULE, key_start, [self()]),
+  io:format("Started keyin ~p~n", [KeyPid]),
 
   Command = nosh,
   case gen_command:load_command(IO, Command) of
     {module, Module}    ->
       NoshPid = spawn_link(Module, run, [IO, ?ARG(Command), ?ENV]),
+      io:format("Started nosh ~p~n", [NoshPid]),
       msg_loop(?IO(KeyPid, NoshPid, NoshPid)),
       exit(ok);
     {error, What}       ->
