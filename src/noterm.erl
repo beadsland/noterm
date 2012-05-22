@@ -93,7 +93,7 @@ start(Echo) ->
   Command = nosh,
   case gen_command:load_command(IO, Command) of
     {module, Module}    ->
-      NoshPid = spawn_link(Module, run, [IO]),
+      NoshPid = spawn_link(Module, run, [IO, ?ARG(Command), ?ENV]),
       msg_loop(?IO(KeyPid, NoshPid, NoshPid)),
       exit(ok);
     {error, What}       ->
