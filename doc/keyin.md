@@ -7,7 +7,7 @@
 
 
 Keyboard listening `pose` process, passing keyboard input to
-`stdout` process.
+`stdout`.
 
 Copyright (c) 2012 Beads D. Land-Trujillo
 
@@ -17,7 +17,8 @@ __Authors:__ Beads D. Land-Trujillo (_web site:_ [`http://twitter.com/beadsland`
 
 __<font color="red">To do</font>__
 <br></br>
-* <font color="red"> io:get_char (see code in jungerl)</font>
+* <font color="red">io:get_char (see code in jungerl)</font>
+* <font color="red">implement as unique service</font>
 <a name="index"></a>
 
 ##Function Index##

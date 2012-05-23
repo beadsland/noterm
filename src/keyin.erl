@@ -23,12 +23,13 @@
 %% CDDL HEADER END
 
 %% @doc Keyboard listening `pose' process, passing keyboard input to
-%% `stdout' process.
+%% `stdout'.
 %% @end
 %% @author Beads D. Land-Trujillo [http://twitter.com/beadsland]
 %% @copyright 2012 Beads D. Land-Trujillo
 
-%% TODO: io:get_char (see code in jungerl)
+%% @todo io:get_char (see code in jungerl)
+%% @todo implement as unique service
 
 -define(module, keyin).
 
@@ -126,5 +127,5 @@ do_receive(IO) ->
   ?MODULE:loop(IO).
 
 do_stop(Reason) ->
-  ?DEBUG("Stopping keyboard: ~p~n", [Reason]), exit(Reason).
-
+  ?DEBUG("Stopping keyboard: ~p~n", [Reason]),
+  exit(Reason).

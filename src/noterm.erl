@@ -30,6 +30,7 @@
 %% @author Beads D. Land-Trujillo [http://twitter.com/beadsland]
 %% @copyright 2012 Beads D. Land-Trujillo
 
+%% TODO: implement "echo" as dash-style option, not parameter
 %% TODO: escript and parameters (make it run like any other shell command)
 %% TODO: make fully redistributable (Win/cygwin/*NIX)
 %% TODO: incorporate full terminfo/ncurses support
@@ -52,89 +53,104 @@
 %% Exported functions
 %%
 
--export([start/0,start_wecho/0]).
+-behaviour(gen_command).
 
-% Private Exports
--export([msg_loop/1]).
+% API entry points
+-export([start/0, start/1, run/3]).
+
+% Hidden callbacks
+-export([do_run/2]).
+
+% Hidden fully-qualified loop
+-export([loop/1]).
 
 %%
 %% API functions
 %%
 
 -spec start() -> no_return().
-%% @doc Start terminal, launching message loop and keyboard listening
-%% process.
-%% @end
-start() -> start(false).
+%% @equiv start([])
+start() -> start([]).
 
--spec start_wecho() -> no_return().
-%% @doc Start terminal, with nosh echo flag set.
+-spec start(Param :: [atom()]) -> no_return().
+%% @doc Start as a blocking function.
+start(Param) -> gen_command:start(Param, ?MODULE).
+
+-spec run(IO :: #std{}, ARG :: #arg{}, ENV :: #env{}) -> no_return().
+%% doc Start as a `pose' command.
+run(IO, ARG, ENV) -> gen_command:run(IO, ARG, ENV, ?MODULE).
+
 %%
-%% This is a stopgap measure pending proper terminal emulation.
-%% @end
-start_wecho() -> io:format("Shell echo flag enabled.\n"), start(true).
+%% Callback Functions
+%%
+
+%% @hidden Callback entry point for gen_command behaviour.
+do_run(IO, ARG) ->
+  ?STDOUT("Starting Noterm ~s terminal emulator on ~p ~p~n",
+          [?VERSION(?MODULE), node(), self()]),
+  error_logger:tty(false),
+
+  Command = keyin,
+  case gen_command:load_command(IO, Command) of
+    {module, Module}    ->
+      KeyPid = spawn_link(Module, run, [?IO(self()), ?ARG(keyin), ?ENV]),
+      do_run(IO, ARG, KeyPid);
+    {error, What}       ->
+      exit({Command, What})
+  end.
+
+% We have a keyboard listener, now load our shell.
+do_run(IO, ARG, KeyPid) ->
+  case ?ARGV(1) of
+    echo    -> ?STDOUT("Shell echo flag enabled.\n"),
+               NoshIO = ?IO(self(), self(), self(), true);
+    _Else   -> NoshIO = ?IO(self())
+  end,
+
+  Command = nosh,
+  case gen_command:load_command(IO, Command) of
+    {module, Module}    ->
+      NoshPid = spawn_link(Module, run, [NoshIO, ?ARG(Command), ?ENV]),
+      ?MODULE:loop(?IO(KeyPid, NoshPid, NoshPid));
+    {error, What}       ->
+      exit({Command, What})
+  end.
+
+%%
+%% Fully-qualified loop
+%%
+
+%% @hidden Iterative loop for passing keyboard input to shell process.
+loop(IO) ->
+  SelfPid = self(),
+  receive
+    {purging, _Pid, _Mod}		-> ?MODULE:loop(IO);
+    {'EXIT', ExitPid, Reason}	-> do_exit(IO, ExitPid, Reason);
+    {MsgTag, Stdin, Line}
+      when Stdin == IO#std.in 	-> do_keyin(IO, MsgTag, Line);
+    {MsgTag, SelfPid, Line}     -> do_output(IO, MsgTag, Line);
+    {MsgTag, Stdout, Line}
+      when Stdout == IO#std.out	-> do_output(IO, MsgTag, Line);
+    {MsgTag, Stderr, Line}
+      when Stderr == IO#std.err	-> do_output(IO, MsgTag, Line);
+    Noise						-> do_noise(IO, Noise)
+  end.
 
 %%
 %% Local functions
 %%
 
-start(Echo) ->
-  error_logger:tty(false),
-  IO = ?IO(self(), self(), self(), Echo),
-  ENV = ?ENV,
-  ?INIT_POSE,
-  io:format("Starting Noterm ~s terminal emulator on ~p ~p~n",
-        [?VERSION(?MODULE), node(), self()]),
-
-  KeyPid = spawn_link(keyin, run, [?IO(self()), ?ARG(keyin), ?ENV]),
-  io:format("Started keyin ~p~n", [KeyPid]),
-
-  Command = nosh,
-  case gen_command:load_command(IO, Command) of
-    {module, Module}    ->
-      NoshPid = spawn_link(Module, run, [IO, ?ARG(Command), ?ENV]),
-      io:format("Started nosh ~p~n", [NoshPid]),
-      msg_loop(?IO(KeyPid, NoshPid, NoshPid)),
-      exit(ok);
-    {error, What}       ->
-      ?STDERR({Command, What}),
-      exit({Command, What})
-  end.
-
-%  try spawn_link(nosh, run, [?IO(self(), self(), self(), Echo)]) of
-%    NoshPid             ->
-%  catch
-%    {Message, Reason}   -> grace(Message, Reason), init:stop()
-%  end.
-
-
-%%@private Export to allow for hotswap.
-msg_loop(IO) ->
-  SelfPid = self(),
-  receive
-    {purging, _Pid, _Mod}		-> ?MODULE:msg_loop(IO);
-    {'EXIT', ExitPid, Reason}	-> do_exit(IO, ExitPid, Reason);
-    {MsgTag, Stdin, Line}
-      when Stdin == IO#std.in 	-> do_keyin(IO, MsgTag, Line);
-    {MsgTag, SelfPid, Line}     -> do_noshout(IO, MsgTag, Line);
-    {MsgTag, Stdout, Line}
-      when Stdout == IO#std.out	-> do_noshout(IO, MsgTag, Line);
-    {MsgTag, Stderr, Line}
-      when Stderr == IO#std.err	-> do_noshout(IO, MsgTag, Line);
-    Noise						-> do_noise(IO, Noise)
-  end.
-
-% Handle nosh process messages.
-do_noshout(IO, MsgTag, Output) ->
+% Handle output.
+do_output(IO, MsgTag, Output) ->
   case MsgTag of
     stdout	-> io:format("~s", [Output]);
-    erlout	-> io:format("~p: data: ~p~n", [nosh, Output]);
+    erlout	-> io:format("data: ~p~n", [Output]);
     erlerr	-> Erlerr = ?FORMAT_ERLERR(Output),
                io:format(standard_error, "** ~s~n", [Erlerr]);
     stderr	-> io:format(standard_error, "** ~s", [Output]);
     debug	-> io:format(standard_error, "-- ~s", [Output])
   end,
-  ?MODULE:msg_loop(IO).
+  ?MODULE:loop(IO).
 
 % Handle keyboard process messages.
 do_keyin(IO, MsgTag, Line) ->
@@ -144,7 +160,7 @@ do_keyin(IO, MsgTag, Line) ->
     stderr	-> io:format(standard_error, "** ~s", [Line]);
     debug   -> io:format(standard_error, "-- ~s", [Line])
   end,
-  ?MODULE:msg_loop(IO).
+  ?MODULE:loop(IO).
 
 % Handle exit signals.
 do_exit(IO, ExitPid, Reason) ->
@@ -152,19 +168,19 @@ do_exit(IO, ExitPid, Reason) ->
     Stdin when Stdin == IO#std.in		->
       ?DEBUG("Stopping shell on keyboard exit: ~p~n", [Reason]),
       ?STDOUT("stop\n"),
-      ?MODULE:msg_loop(IO);
+      ?MODULE:loop(IO);
     Stdout when Stdout == IO#std.out	->
       grace("Stopping terminal on shell exit", Reason),
-      init:stop();
+      exit(ok);
     OtherPid                            ->
       ?DEBUG("Saw ~p exit: ~s~n", [OtherPid, ?FORMAT_ERLERR(Reason)]),
-      ?MODULE:msg_loop(IO)
+      ?MODULE:loop(IO)
   end.
 
 % Handle message queue noise.
 do_noise(IO, Noise) ->
   io:format(standard_error, "noise: ~p ~p~n", [Noise, self()]),
-  ?MODULE:msg_loop(IO).
+  ?MODULE:loop(IO).
 
 grace(Message, Reason) ->
   io:format(standard_error, "~s: ~s~n", [Message, ?FORMAT_ERLERR(Reason)]).
