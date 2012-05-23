@@ -90,7 +90,7 @@ good:	compile
 doc:	compile
 	
 compile:
-	@rm -f *.dump
+	@rm -f doc/edoc-info *.dump
 	@$(CROWBAR:_cmds_=compile doc)
 
 current:
