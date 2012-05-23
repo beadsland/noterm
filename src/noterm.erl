@@ -151,11 +151,11 @@ do_keyin(IO, MsgTag, Line) ->
 do_exit(IO, ExitPid, Reason) ->
   case ExitPid of
     Stdin when Stdin == IO#std.in		->
-      ?DEBUG("Stopping shell on keyboard exit: ~p", [Reason]),
+      ?DEBUG("Stopping shell on keyboard exit: ~p~n", [Reason]),
       ?STDOUT("stop\n"),
       ?MODULE:msg_loop(IO);
     Stdout when Stdout == IO#std.out	->
-      grace("Stopping terminal on shell exit: ~p", [Reason]),
+      grace("Stopping terminal on shell exit", Reason),
       init:stop();
     OtherPid                            ->
       ?DEBUG("Saw ~p exit: ~s~n", [OtherPid, ?FORMAT_ERLERR(Reason)]),
