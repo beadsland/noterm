@@ -55,8 +55,7 @@
 -export([start/0,start_wecho/0]).
 
 % Private Exports
--export([key_start/1]).
--export([msg_loop/1, key_loop/1]).
+-export([msg_loop/1]).
 
 %%
 %% API functions
@@ -173,41 +172,3 @@ grace(Message, Reason) ->
 strip_escapes(Subject) ->
   {ok, MP} = re:compile("\e\[[\d,\s]+[A-Z]"),
   re:replace(Subject, MP, "", [global, {return, list}]).
-
-%%========================================
-%% Functions for keyboard process.
-%%========================================
-
-%%@private Export to allow for spawn.
-key_start(Pid) ->
-  IO = ?IO(Pid),
-  ENV = ?ENV,
-  ?INIT_POSE,
-  ?DEBUG("Listening to keyboard ~p~n", [self()]),
-  key_loop(IO).
-
-%%@private Export to allow for hotswap.
-key_loop(IO) ->
-  case io:get_line("") of
-    ok			    -> key_receive(IO);
-    eof 			-> key_stop(eof);
-    ".\n"			-> key_stop(eof);
-    {error, Reason} -> ?STDERR("error: ~p~n", [Reason]);
-    Line			-> ?STDOUT(Line)
-  end,
-  ?MODULE:key_loop(IO).
-
-key_receive(IO) ->
-  receive
-    {purging, _Pid, _Mod}		-> true; % chase your tail
-    {'EXIT', Stdin, Reason}
-      when Stdin == IO#std.in	-> io:format("~p exit: ~p~n",
-                                             [?MODULE, Reason]);
-    Noise						-> ?STDERR("noise: ~p ~p~n",
-                                           [Noise, self()])
-  after
-    1 -> false
-  end.
-
-key_stop(Reason) ->
-  ?DEBUG("Stopping keyboard: ~p~n", [Reason]), exit(Reason).

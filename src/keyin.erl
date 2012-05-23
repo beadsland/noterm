@@ -104,7 +104,8 @@ loop(IO) ->
     ".\n"           -> do_stop(eof);
     {error, Reason} -> ?STDERR("error: ~p~n", [Reason]);
     Line            -> ?STDOUT(Line)
-  end.
+  end,
+  ?MODULE:loop(IO).
 
 %%
 %% Local Functions
@@ -120,8 +121,9 @@ do_receive(IO) ->
     Noise                       ->
       ?STDERR("noise: ~p ~p~n", [Noise, self()])
   after
-    1 -> ?MODULE:loop(IO)
-  end.
+    1 -> true
+  end,
+  ?MODULE:loop(IO).
 
 do_stop(Reason) ->
   ?DEBUG("Stopping keyboard: ~p~n", [Reason]), exit(Reason).
