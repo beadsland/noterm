@@ -183,7 +183,7 @@ do_noise(IO, Noise) ->
   ?MODULE:loop(IO).
 
 grace(Message, Reason) ->
-  io:format(standard_error, "~s: ~s~n", [Message, ?FORMAT_ERLERR(Reason)]).
+  io:format(standard_error, "** ~s: ~s~n", [Message, ?FORMAT_ERLERR(Reason)]).
 
 strip_escapes(Subject) ->
   {ok, MP} = re:compile("\e\[[\d,\s]+[A-Z]"),
