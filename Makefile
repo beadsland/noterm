@@ -46,12 +46,9 @@ ONLINE	=	`$(PING) www.google.com 2>&1 >/dev/null; \
 TTY	=	`tty`
 
 
-HIDE_EDOC_WARN	=	grep -v "cannot handle URI.*edoc-info"
 SUCCINCT	=	grep -v "Entering directory" \
 				| grep -v "Leaving directory"
-HIDE_TEST_WARN	=	grep -v "edoc: warning: file.*test.erl' belongs"
-CROWBAR		=	rebar _cmds_ | $(HIDE_EDOC_WARN) | $(SUCCINCT) \
-				| $(HIDE_TEST_WARN)
+CROWBAR		=	rebar _cmds_ | $(SUCCINCT) 
 
 POSE	=	-pa deps/pose/ebin
 ERL	=	erl -noshell -i deps $(POSE)
@@ -90,7 +87,8 @@ good:	compile
 doc:	compile
 	
 compile:
-	@rm -f doc/edoc-info *.dump
+	@rm -f *.dump doc/*.md doc/*.html
+	@ERL_DOC deps; export ERL_DOC
 	@$(CROWBAR:_cmds_=compile doc)
 
 current:
@@ -99,7 +97,6 @@ current:
 		$(CROWBAR:_cmds_=compile doc); fi
 
 clean: 		online
-	@rm -f doc/*.md doc/*.html
 	@if [ "$(ONLINE)" == yes ]; \
 		then (rm -rf deps; rebar clean get-deps | $(SUCCINCT)); \
 		else (rebar clean | $(SUCCINCT)); fi
