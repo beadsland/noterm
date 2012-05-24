@@ -88,7 +88,6 @@ doc:	compile
 	
 compile:
 	@rm -f *.dump doc/*.md doc/*.html
-	@ERL_DOC deps; export ERL_DOC
 	@$(CROWBAR:_cmds_=compile doc)
 
 current:
