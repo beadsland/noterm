@@ -114,7 +114,7 @@ do_receive(IO) ->
   receive
     {purging, _Pid, _Mod}                               ->
       do_receive(IO);
-    {'EXIT', Stdin, _Reason} when Stdin == IO#std.in    ->
+    {'EXIT', Stdout, _Reason} when Stdout == IO#std.out ->
       exit(ok);
     Noise                                               ->
       ?STDERR("noise: ~p ~p~n", [Noise, self()])
