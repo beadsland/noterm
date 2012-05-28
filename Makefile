@@ -55,8 +55,9 @@ ERL	=	erl -noshell -i deps $(POSE)
 POSURE	=	-s pose start posure
 SUPERL	=	-s pose start superl
 NOTERM	=	-s pose start noterm
-ERLSTOP	=	-s init stop
+STOP	=	-s init stop
 
+FOLD	=	-s pose start folderl
 
 #
 # Execution rules start
@@ -66,10 +67,13 @@ all:		current push-nosh noterm
 
 run:		compile noterm
 
+fold:		compile
+	echo This is a test line of text. | $(FOLD)
+
 noterm:	nodump tabs
 	@if [ "$(TTY)" == "not a tty" ]; \
-		then ($(ERL) $(SUPERL) $(POSURE) $(NOTERM) echo $(ERLSTOP)); \
-		else ($(ERL) $(SUPERL) $(POSURE) $(NOTERM) $(ERLSTOP)); fi
+		then ($(ERL) $(SUPERL) $(POSURE) $(NOTERM) echo $(STOP)); \
+		else ($(ERL) $(SUPERL) $(POSURE) $(NOTERM) $(STOP)); fi
 
 nodump:
 	@if [ -e erl_crash.dump ]; then (rm erl_crash.dump); fi
@@ -82,7 +86,7 @@ tabs:
 #
 
 good:	compile
-	@$(ERL) $(SUPERL) $(POSURE) $(ERLSTOP)
+	@$(ERL) $(SUPERL) $(POSURE) $(STOP)
 
 doc:	compile
 	
