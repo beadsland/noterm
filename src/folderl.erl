@@ -118,7 +118,7 @@ loop(IO, Cols, String, Count) when Count == Cols ->
 
 % Absent max columns, keep reading characters until stream dries up.
 loop(IO, Cols, String, Count) ->
-  ?DEBUG("loop with ~s~n", [String]),
+%  ?DEBUG("loop with ~s~n", [String]),
   SelfPid = self(),
   receive
     {purging, _Pid, _Mod}                               ->
