@@ -140,6 +140,6 @@ loop(IO, Cols, String, Count) ->
       io:format(standard_error, "noise: ~p ~p~n", [Noise, self()]),
       ?MODULE:loop(IO, Cols, String, Count)
   after
-    100 -> io:format("~s", [String]),
+    10  -> io:format("~s", [String]),
            ?MODULE:loop(IO, Cols, "", Count)
   end.
