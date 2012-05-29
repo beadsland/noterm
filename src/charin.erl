@@ -104,21 +104,18 @@ loop(IO) ->
     {error, Reason} -> ?STDERR("error: ~p~n", [Reason]);
     Char            -> ?STDOUT(Char)
   end,
-  do_receive(IO).
-
-%%
-%% Local Functions
-%%
-
-do_receive(IO) ->
   receive
     {purging, _Pid, _Mod}                               ->
-      do_receive(IO);
+      true;
     {'EXIT', Stdout, _Reason} when Stdout == IO#std.out ->
       exit(ok);
     Noise                                               ->
       ?DEBUG("noise: ~p ~p~n", [Noise, self()])
   after
-    500 -> true
+    1 -> true
   end,
   ?MODULE:loop(IO).
+
+%%
+%% Local Functions
+%%

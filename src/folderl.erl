@@ -138,7 +138,7 @@ loop(IO, Cols, String, Count) ->
     {debug, SelfPid, What}                              ->
       io:format(standard_error, "-- ~s", [What]),
       ?MODULE:loop(IO, Cols, String, Count);
-    Noise                                               ->
+    _Noise                                               ->
       %io:format(standard_error, "noise: ~p ~p~n", [Noise, self()]),
       ?MODULE:loop(IO, Cols, String, Count)
   after
