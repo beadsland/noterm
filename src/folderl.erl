@@ -28,7 +28,7 @@
 
 %% @todo Add line folding for Erlang terms.
 
-%% @version 0.1.3
+%% @version 0.1.4
 
 -define(module, folderl).
 
@@ -42,7 +42,7 @@
 -endif.
 % END POSE PACKAGE PATTERN
 
--version("0.1.3").
+-version("0.1.4").
 
 %%
 %% Include files
