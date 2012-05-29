@@ -119,6 +119,6 @@ do_receive(IO) ->
     Noise                                               ->
       ?DEBUG("noise: ~p ~p~n", [Noise, self()])
   after
-    100 -> true
+    500 -> true
   end,
   ?MODULE:loop(IO).
