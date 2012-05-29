@@ -145,15 +145,18 @@ do_fold(IO, Cols, String, _Count) ->
 % Handle messages from executing command.
 do_output(IO, Cols, String, Count, MsgTag, OutPid, Payload) ->
   case MsgTag of
-    stdout when OutPid == IO#std.out, Payload == "\n"   ->
+    stdin when Payload == eof                          ->
+      io:format("~s~n", [String]),
+      exit(ok);
+    stdout when OutPid == IO#std.in, Payload == "\n"   ->
       io:format("~s~n", [String]),
       ?MODULE:loop(IO, Cols, "", 0);
-    stdout when OutPid == IO#std.out                    ->
+    stdout when OutPid == IO#std.in                    ->
       ?MODULE:loop(IO, Cols, lists:append(String, Payload), Count + 1);
-    stderr when OutPid == IO#std.err                    ->
+    stderr when OutPid == IO#std.in                    ->
       io:format(standard_error, "** ~s", [Payload]),
       ?MODULE:loop(IO, Cols, String, Count);
-    debug when OutPid == self()                         ->
+    debug when OutPid == self()                        ->
       io:format(standard_error, "-- ~s", [Payload]),
       ?MODULE:loop(IO, Cols, String, Count)
   end.
