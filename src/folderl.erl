@@ -126,7 +126,7 @@ loop(IO, Cols, String, Count) ->
 
 do_exit(IO, Cols, String, Count, ExitPid, Reason) ->
   if ExitPid == IO#std.in,
-     Reason == ok           -> exit(normal);
+     Reason == ok           -> exit(ok);
      ExitPid == IO#std.in   -> exit(Reason);
      true                   -> ?MODULE:loop(IO, Cols, String, Count)
   end.
