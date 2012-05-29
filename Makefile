@@ -57,7 +57,16 @@ SUPERL	=	-s pose start superl
 NOTERM	=	-s pose start noterm
 STOP	=	-s init stop
 
-FOLD	=	-s pose start folderl
+BOOT	= 	echo Successful folderl load. | $(FOLD); echo $$?
+STRAP	=	cat
+
+FOLDERL	= 	$(ERL) -s pose start folderl $(STOP)
+FOLDTEST	= echo Fold | $(FOLD); echo $$?
+ifeq (`$(FOLDTEST)`,0)
+	FOLD	=  	$(FOLDERL)
+else
+	FOLD	=	cat
+endif
 
 #
 # Execution rules start
@@ -66,9 +75,6 @@ FOLD	=	-s pose start folderl
 all:		current push-nosh noterm
 
 run:		compile noterm
-
-fold:		compile
-	echo This is a test line of text. | $(FOLD)
 
 noterm:	nodump tabs
 	@if [ "$(TTY)" == "not a tty" ]; \
