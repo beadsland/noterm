@@ -48,7 +48,7 @@
 %% Include files
 %%
 
-%-define(debug, true).
+-define(debug, true).
 -include("pose/include/interface.hrl").
 
 -import(io).
@@ -139,6 +139,7 @@ do_fold(IO, Cols, String, _Count) ->
 
 % Handle messages from executing command.
 do_output(IO, Cols, String, Count, MsgTag, OutPid, Payload) ->
+  ?DEBUG("do_output: ~p, ~p, ~p", [MsgTag, OutPid, Payload]),
   case MsgTag of
     stdout when OutPid == IO#std.out, Payload == "\n"   ->
       io:format("~s~n", [String]),
