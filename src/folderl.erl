@@ -123,6 +123,8 @@ loop(IO, Cols, String, Count) ->
   receive
     {purging, _Pid, _Mod}                               ->
       ?MODULE:loop(IO, Cols, String, Count);
+    {'EXIT', Stdin, ok} when Stdin == IO#std.in         ->
+      exit(normal);
     {'EXIT', Stdin, Reason} when Stdin == IO#std.in     ->
       exit({charin, Reason});
     {stdout, Stdout, "\n"} when Stdout == IO#std.out    ->
@@ -137,7 +139,7 @@ loop(IO, Cols, String, Count) ->
       io:format(standard_error, "-- ~s", [What]),
       ?MODULE:loop(IO, Cols, String, Count);
     Noise                                               ->
-      io:format(standard_error, "noise: ~p ~p~n", [Noise, self()]),
+      %io:format(standard_error, "noise: ~p ~p~n", [Noise, self()]),
       ?MODULE:loop(IO, Cols, String, Count)
   after
     10  -> io:format("~s", [String]),
