@@ -106,6 +106,27 @@ do_run(IO, _ARG) ->
 
 %% @hidden Iterative loop for folding characters received from `stdin'.
 loop(IO, Cols, String, Count) when Count == Cols ->
+  do_fold(IO, Cols, String, Count);
+loop(IO, Cols, String, Count) ->
+  receive
+    {purging, _Pid, _Mod}                               ->
+      ?MODULE:loop(IO, Cols, String, Count);
+    {'EXIT', Stdin, ok} when Stdin == IO#std.in         ->
+      exit(ok);
+    {'EXIT', Stdin, Reason} when Stdin == IO#std.in     ->
+      exit({charin, Reason});
+    {MsgTag, OutPid, Payload}                           ->
+      do_output(IO, Cols, String, Count, MsgTag, OutPid, Payload);
+    Noise                                              ->
+      ?DEBUG("noise: ~p ~p~n", [Noise, self()]),
+      ?MODULE:loop(IO, Cols, String, Count)
+  after
+    100 -> io:format("~s", [String]),
+           ?MODULE:loop(IO, Cols, "", Count)
+  end.
+
+% Fold lines once they reach maximum column length.
+do_fold(IO, Cols, String, _Count) ->
   {ok, MP} = re:compile("^(.*[\\ \\,])([^\\ \\,]*)\$"),
   case re:run(String, MP, [{capture, [1,2], list}]) of
     nomatch                 -> io:format("~s~n", [String]),
@@ -114,34 +135,19 @@ loop(IO, Cols, String, Count) when Count == Cols ->
                                NewString = lists:append("   ", Below),
                                ?MODULE:loop(IO, Cols, NewString,
                                             length(NewString))
-  end;
+  end.
 
-% Absent max columns, keep reading characters until stream dries up.
-loop(IO, Cols, String, Count) ->
-%  ?DEBUG("loop with ~s~n", [String]),
-  SelfPid = self(),
-  receive
-    {purging, _Pid, _Mod}                               ->
-      ?MODULE:loop(IO, Cols, String, Count);
-    {'EXIT', Stdin, ok} when Stdin == IO#std.in         ->
-      exit(ok);
-    {'EXIT', Stdin, Reason} when Stdin == IO#std.in     ->
-      exit({charin, Reason});
-    {stdout, Stdout, "\n"} when Stdout == IO#std.out    ->
-      io:format("~s~n", [String]),
-      ?MODULE:loop(IO, Cols, "", 0);
-    {stdout, Stdout, Char} when Stdout == IO#std.out   ->
-      ?MODULE:loop(IO, Cols, lists:append(String, Char), Count + 1);
-    {stderr, Stderr, What} when Stderr == IO#std.err    ->
-      io:format(standard_error, "** ~s", [What]),
-      ?MODULE:loop(IO, Cols, String, Count);
-    {debug, SelfPid, What}                              ->
-      io:format(standard_error, "-- ~s", [What]),
-      ?MODULE:loop(IO, Cols, String, Count);
-    _Noise                                              ->
-      %io:format(standard_error, "noise: ~p ~p~n", [Noise, self()]),
-      ?MODULE:loop(IO, Cols, String, Count)
-  after
-    100 -> io:format("~s", [String]),
-           ?MODULE:loop(IO, Cols, "", Count)
+% Handle messages from executing command.
+do_output(IO, Cols, String, Count, MsgTag, OutPid, Payload) ->
+  if OutPid == IO#std.out, MsgTag == stdout, Payload == "\n"    ->
+       io:format("~s~n", [String]),
+       ?MODULE:loop(IO, Cols, "", 0);
+     OutPid == IO#std.out, MsgTag == stdout                     ->
+       ?MODULE:loop(IO, Cols, lists:append(String, Payload), Count + 1);
+     OutPid == IO#std.err, MsgTag == stderr                     ->
+       io:format(standard_error, "** ~s", [Payload]),
+       ?MODULE:loop(IO, Cols, String, Count);
+     OutPid == self(), MsgTag == debug                          ->
+       io:format(standard_error, "-- ~s", [Payload]),
+       ?MODULE:loop(IO, Cols, String, Count)
   end.
