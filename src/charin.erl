@@ -100,7 +100,7 @@ do_run(IO, _ARG) ->
 %% @hidden Iterative loop for keyboard listening and message receiving.
 loop(IO) ->
   case io:get_chars("", 1) of
-    eof             -> exit(eof);
+    eof             -> exit(ok);
     {error, Reason} -> ?STDERR("error: ~p~n", [Reason]);
     Char            -> ?STDOUT(Char)
   end,
@@ -117,8 +117,8 @@ do_receive(IO) ->
     {'EXIT', Stdout, _Reason} when Stdout == IO#std.out ->
       exit(ok);
     Noise                                               ->
-      ?STDERR("noise: ~p ~p~n", [Noise, self()])
+      ?DEBUG("noise: ~p ~p~n", [Noise, self()])
   after
-    1 -> true
+    100 -> true
   end,
   ?MODULE:loop(IO).
