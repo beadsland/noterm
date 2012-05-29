@@ -48,7 +48,7 @@
 %% Include files
 %%
 
--define(debug, true).
+%-define(debug, true).
 -include("pose/include/interface.hrl").
 
 -import(io).
@@ -111,10 +111,8 @@ loop(IO, Cols, String, Count) ->
   receive
     {purging, _Pid, _Mod}                               ->
       ?MODULE:loop(IO, Cols, String, Count);
-    {'EXIT', Stdin, ok} when Stdin == IO#std.in         ->
-      exit(ok);
-    {'EXIT', Stdin, Reason} when Stdin == IO#std.in     ->
-      exit({charin, Reason});
+    {'EXIT', ExitPid, Reason}                           ->
+      do_exit(IO, Cols, String, Count, ExitPid, Reason);
     {MsgTag, OutPid, Payload}                           ->
       do_output(IO, Cols, String, Count, MsgTag, OutPid, Payload);
     Noise                                              ->
@@ -123,6 +121,13 @@ loop(IO, Cols, String, Count) ->
   after
     100 -> io:format("~s", [String]),
            ?MODULE:loop(IO, Cols, "", Count)
+  end.
+
+do_exit(IO, Cols, String, Count, ExitPid, Reason) ->
+  if ExitPid == IO#std.in,
+     Reason == ok           -> exit(normal);
+     ExitPid == IO#std.in   -> exit(Reason);
+     true                   -> ?MODULE:loop(IO, Cols, String, Count)
   end.
 
 % Fold lines once they reach maximum column length.
