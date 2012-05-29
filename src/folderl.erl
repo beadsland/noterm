@@ -27,6 +27,7 @@
 %% @copyright 2012 Beads D. Land-Trujillo
 
 %% @todo Add line folding for Erlang terms.
+%% @todo Properly listen to pipelines (get keyboard if no pipe)
 
 %% @version 0.1.4
 
