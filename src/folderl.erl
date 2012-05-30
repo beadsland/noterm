@@ -66,10 +66,10 @@
 % API entry points
 -export([start/0, start/1, run/3]).
 
-% Hidden callbacks
+% private callbacks
 -export([do_run/2]).
 
-% Hidden fully-qualified loop
+% private fully-qualified loop
 -export([loop/4]).
 
 %%
@@ -92,7 +92,7 @@ run(IO, ARG, ENV) -> gen_command:run(IO, ARG, ENV, ?MODULE).
 %% Callback Functions
 %%
 
-%% @hidden Callback entry point for gen_command behaviour.
+%% @private Callback entry point for gen_command behaviour.
 do_run(IO, _ARG) ->
   ?DEBUG("Running folderl ~p~n", [self()]),
   Command = charin,
@@ -105,7 +105,7 @@ do_run(IO, _ARG) ->
       exit({Command, What})
   end.
 
-%% @hidden Iterative loop for folding characters received from `stdin'.
+%% @private Iterative loop for folding characters received from `stdin'.
 loop(IO, Cols, String, Count) when Count == Cols ->
   do_fold(IO, Cols, String, Count);
 loop(IO, Cols, String, Count) ->

@@ -62,10 +62,10 @@
 % API entry points
 -export([start/0, start/1, run/3]).
 
-% Hidden callbacks
+% private callbacks
 -export([do_run/2]).
 
-% Hidden fully-qualified loop
+% private fully-qualified loop
 -export([loop/1]).
 
 %%
@@ -88,7 +88,7 @@ run(IO, ARG, ENV) -> gen_command:run(IO, ARG, ENV, ?MODULE).
 %% Callback Functions
 %%
 
-%% @hidden Callback entry point for gen_command behaviour.
+%% @private Callback entry point for gen_command behaviour.
 do_run(IO, _ARG) ->
   ?DEBUG("Listening to keyboard ~p~n", [self()]),
   ?MODULE:loop(IO).
@@ -97,7 +97,7 @@ do_run(IO, _ARG) ->
 %% Fully-qualified loop
 %%
 
-%% @hidden Iterative loop for keyboard listening and message receiving.
+%% @private Iterative loop for keyboard listening and message receiving.
 loop(IO) ->
   case io:get_line("") of
     ok              -> do_receive(IO);

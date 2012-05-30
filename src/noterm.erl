@@ -58,10 +58,10 @@
 % API entry points
 -export([start/0, start/1, run/3]).
 
-% Hidden callbacks
+% private callbacks
 -export([do_run/2]).
 
-% Hidden fully-qualified loop
+% private fully-qualified loop
 -export([loop/1]).
 
 %%
@@ -84,7 +84,7 @@ run(IO, ARG, ENV) -> gen_command:run(IO, ARG, ENV, ?MODULE).
 %% Callback Functions
 %%
 
-%% @hidden Callback entry point for gen_command behaviour.
+%% @private Callback entry point for gen_command behaviour.
 do_run(IO, ARG) ->
   ?STDOUT("Starting Noterm ~s terminal emulator on ~p ~p~n",
           [?VERSION(?MODULE), node(), self()]),
@@ -120,7 +120,7 @@ do_run(IO, ARG, KeyPid) ->
 %% Fully-qualified loop
 %%
 
-%% @hidden Iterative loop for passing keyboard input to shell process.
+%% @private Iterative loop for passing keyboard input to shell process.
 loop(IO) ->
   SelfPid = self(),
   receive
