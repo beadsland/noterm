@@ -2,6 +2,7 @@
 
 #Module noterm#
 * [Description](#description)
+* [Data Types](#types)
 * [Function Index](#index)
 * [Function Details](#functions)
 
@@ -31,7 +32,20 @@ __<font color="red">To do</font>__
  
 Translates standard I/O to Erlang messaging.
 
-_Full terminal emulation has yet to be implemented._<a name="index"></a>
+_Full terminal emulation has yet to be implemented._
+<a name="types"></a>
+
+##Data Types##
+
+
+
+
+###<a name="type-env_prop">env_prop()</a>##
+
+
+
+	env_prop() = atom() | {atom(), string()}
+<a name="index"></a>
 
 ##Function Index##
 
@@ -48,7 +62,7 @@ _Full terminal emulation has yet to be implemented._<a name="index"></a>
 ###run/3##
 
 
-	run(IO::#std{}, ARG::#arg{}, ENV::#env{}) -&gt; no_return()
+	run(IO::#std{in = pid(), out = pid(), err = pid(), echo = boolean()}, ARG::#arg{cmd = atom(), v = list()}, ENV::#env{plist = [<a href="#type-env_prop">env_prop()</a>]}) -> no_return()
 <br></br>
 
 

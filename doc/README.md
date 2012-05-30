@@ -14,5 +14,8 @@ __Authors:__ Beads D. Land-Trujillo (_web site:_ [`http://twitter.com/beadsland`
 
 
 <table width="100%" border="0" summary="list of modules">
+<tr><td><a href="charin.md" class="module">charin</a></td></tr>
+<tr><td><a href="folderl.md" class="module">folderl</a></td></tr>
+<tr><td><a href="keyin.md" class="module">keyin</a></td></tr>
 <tr><td><a href="noterm.md" class="module">noterm</a></td></tr></table>
 
