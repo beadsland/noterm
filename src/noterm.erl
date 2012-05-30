@@ -86,6 +86,7 @@ run(IO, ARG, ENV) -> gen_command:run(IO, ARG, ENV, ?MODULE).
 
 %% @private Callback entry point for gen_command behaviour.
 do_run(IO, ARG) ->
+%  exit(barf),
   ?STDOUT("Starting Noterm ~s terminal emulator on ~p ~p~n",
           [?VERSION(?MODULE), node(), self()]),
   error_logger:tty(false),
