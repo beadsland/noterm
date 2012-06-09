@@ -91,6 +91,7 @@ run(IO, ARG, ENV) -> gen_command:run(IO, ARG, ENV, ?MODULE).
 %% @private Callback entry point for gen_command behaviour.
 do_run(IO, _ARG) ->
   ?DEBUG("Listening for keyboard characters ~p~n", [self()]),
+  process_flag(priority, high),
   ?MODULE:loop(IO).
 
 %%
