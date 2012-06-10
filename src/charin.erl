@@ -47,7 +47,7 @@
 %% Include files
 %%
 
-%-define(debug, true).
+-define(debug, true).
 -include_lib("pose/include/interface.hrl").
 
 -import(gen_command).
@@ -102,7 +102,7 @@ do_run(IO, _ARG) ->
 loop(IO) ->
   case io:get_chars("", 1) of
     eof             -> exit(ok);
-    {error, Reason} -> ?STDERR("error: ~p~n", [Reason]);
+    {error, Reason} -> ?STDERR({?MODULE, {char, Reason}});
     Char            -> ?STDOUT(Char)
   end,
   receive
@@ -116,7 +116,3 @@ loop(IO) ->
     1 -> true
   end,
   ?MODULE:loop(IO).
-
-%%
-%% Local Functions
-%%
