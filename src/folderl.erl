@@ -29,7 +29,7 @@
 %% @todo Add line folding for Erlang terms.
 %% @todo Properly listen to pipelines (get keyboard if no pipe)
 
-%% @version 0.1.4
+%% @version 0.2.0
 
 -define(module, folderl).
 
@@ -43,7 +43,7 @@
 -endif.
 % END POSE PACKAGE PATTERN
 
--version("0.1.4").
+-version("0.2.0").
 
 %%
 %% Include files
@@ -53,9 +53,8 @@
 -include_lib("pose/include/interface.hrl").
 
 -import(gen_command).
--import(io).
--import(re).
 -import(lists).
+-import(io).
 -import(string).
 
 %%
@@ -68,7 +67,7 @@
 -export([start/0, start/1, run/3]).
 
 % private callbacks
--export([do_run/2]).
+-export([do_run/2, until_flushline/2]).
 
 % private fully-qualified loop
 -export([loop/4]).
@@ -93,76 +92,86 @@ run(IO, ARG, ENV) -> gen_command:run(IO, ARG, ENV, ?MODULE).
 %% Callback Functions
 %%
 
-%% @private Callback entry point for gen_command behaviour.
-do_run(IO, _ARG) ->
-  ?DEBUG("Running folderl ~p~n", [self()]),
-  Command = charin,
-  case gen_command:load_command(IO, Command) of
-    {module, Module}    ->
-      CharPid = spawn_link(Module, run, [?IO(self()), ?ARG(Command), ?ENV]),
-      ?DEBUG("Spawned charin ~p~n", [CharPid]),
-      ?MODULE:loop(?IO(CharPid), 80, "", 0);
-    {error, What}       ->
-      exit({Command, What})
+%% @private Callback entry point for io_server requests.
+until_flushline([], eof) -> {done, eof, []};
+until_flushline(ThisFar, eof) -> {done, ThisFar, eof};
+until_flushline(ThisFar, CharList) ->
+  case lists:splitwith(fun(X) -> X =/= $\n end, CharList) of
+    {Left, []}              -> {done, ThisFar ++ Left, []};
+    {Left, [$\n | Right]}   -> {done, ThisFar ++ Left ++ "\n", Right}
   end.
 
-%% @private Iterative loop for folding characters received from `stdin'.
+request_flushline() ->
+  until_flushline("", ""),
+  Request = {get_until, unicode, '', ?MODULE, until_flushline, []},
+  user ! {io_request, self(), user, Request}.
+
+%% @private Callback entry point for gen_command behaviour.
+do_run(IO, _ARG) ->
+  ?DEBUG("Running folderl2 ~p~n", [self()]),
+  request_flushline(),
+  ?MODULE:loop(IO, 80, "", 0).
+
+%% @private Iterative loop for folding input.
 loop(IO, Cols, String, Count) when Count >= Cols ->
   do_fold(IO, Cols, String, Count);
 loop(IO, Cols, String, Count) ->
+  ?DEBUG("loop: ~p~n", [{String, Count}]),
   receive
-    {purging, _Pid, _Mod}                               ->
+    {purging, _Pid, _Mod}                              ->
       ?MODULE:loop(IO, Cols, String, Count);
-    {'EXIT', ExitPid, Reason}                           ->
+    {'EXIT', ExitPid, Reason}                          ->
       do_exit(IO, Cols, String, Count, ExitPid, Reason);
-    {MsgTag, OutPid, Payload}                           ->
-      do_output(IO, Cols, String, Count, MsgTag, OutPid, Payload);
+    {io_reply, user, Reply}                            ->
+      do_input(IO, Cols, String, Count, Reply);
     Noise                                              ->
       ?DEBUG("noise: ~p ~p~n", [Noise, self()]),
       ?MODULE:loop(IO, Cols, String, Count)
   after
-    100 -> io:format("~s", [String]),
+    100 -> ?STDOUT("~s", [String]),
            ?MODULE:loop(IO, Cols, "", Count)
   end.
 
+% Handle exit messages
 do_exit(IO, Cols, String, Count, ExitPid, Reason) ->
-  if ExitPid == IO#std.in,
+  if ExitPid == IO#std.out,
      Reason == ok           -> exit(ok);
-     ExitPid == IO#std.in   -> exit(Reason);
-     true                   -> ?MODULE:loop(IO, Cols, String, Count)
+     ExitPid == IO#std.out  -> exit(Reason);
+     true                   -> ?DEBUG("Saw ~p exit: ~p~n", [ExitPid, Reason]),
+                               ?MODULE:loop(IO, Cols, String, Count)
   end.
 
-% Fold lines once they reach maximum column length.
+% Handle input from io_server
+do_input(IO, Cols, String, Count, eof) ->
+  ?DEBUG("eof\n"),
+  ?STDOUT(String),
+  do_exit(IO, Cols, String, Count, IO#std.in, ok);
+do_input(IO, Cols, String, Count, {error, Error}) ->
+  ?STDERR({?module, Error}),
+  request_flushline(),
+  ?MODULE:loop(IO, Cols, String, Count);
+do_input(IO, Cols, String, Count, Data) ->
+  ?DEBUG("input: ~p~n", [{String, Count, Data}]),
+  request_flushline(),
+  NewString = lists:append(String, Data),
+  case string:right(NewString, 1) of
+    "\n"    -> ?STDOUT(NewString),
+               ?MODULE:loop(IO, Cols, "", 0);
+    _Else   -> ?STDOUT(NewString),
+               ?MODULE:loop(IO, Cols, "", string:len(NewString))
+  end.
+
+% Fold lines that have reached maximum column length.
 do_fold(IO, Cols, String, Count) ->
   {ok, MP} = re:compile("^(.*[\\ \\,])([^\\ \\,]*)\$"),
   String1 = string:substr(String, 1, Cols - (string:len(String) - Count)),
   String2 = string:substr(String, string:len(String1) + 1),
   case re:run(String1, MP, [{capture, [1,2], list}]) of
-    nomatch                 -> io:format("~s~n", [String]),
+    nomatch                 -> ?STDOUT("~s~n", [String]),
                                ?MODULE:loop(IO, Cols, "", 0);
-    {match, [Above, Below]} -> io:format("~s~n", [Above]),
+    {match, [Above, Below]} -> ?STDOUT("~s~n", [Above]),
                                NewString = lists:append(["   ",
                                                          Below, String2]),
                                ?MODULE:loop(IO, Cols, NewString,
                                             string:len(NewString))
-  end.
-
-% Handle messages from executing command.
-do_output(IO, Cols, String, Count, MsgTag, OutPid, Payload) ->
-  case MsgTag of
-    stdin when Payload == eof                          ->
-      io:format("~s~n", [String]),
-      exit(ok);
-    stdout when OutPid == IO#std.in, Payload == "\n"   ->
-      io:format("~s~n", [String]),
-      ?MODULE:loop(IO, Cols, "", 0);
-    stdout when OutPid == IO#std.in                    ->
-      ?MODULE:loop(IO, Cols, lists:append(String, Payload),
-                   Count + string:len(Payload));
-    stderr when OutPid == IO#std.in                    ->
-      io:format(standard_error, "** ~s", [Payload]),
-      ?MODULE:loop(IO, Cols, String, Count);
-    debug when OutPid == self()                        ->
-      io:format(standard_error, "-- ~s", [Payload]),
-      ?MODULE:loop(IO, Cols, String, Count)
   end.
