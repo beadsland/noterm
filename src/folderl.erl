@@ -29,9 +29,9 @@
 %% @todo Add line folding for Erlang terms.
 %% @todo Properly listen to pipelines (get keyboard if no pipe)
 
-%% @version 0.2.0
+%% @version 0.2.1
 
--define(module, folderl). 
+-define(module, folderl).
 
 % BEGIN POSE PACKAGE PATTERN
 -ifndef(package).
@@ -43,7 +43,7 @@
 -endif.
 % END POSE PACKAGE PATTERN
 
--version("0.2.0").
+-version("0.2.1").
 
 %%
 %% Include files
@@ -56,6 +56,7 @@
 -import(lists).
 -import(io).
 -import(string).
+-import(re).
 
 %%
 %% Exported functions
@@ -113,8 +114,6 @@ do_run(IO, _ARG) ->
   ?MODULE:loop(IO, 80, "", 0).
 
 %% @private Iterative loop for folding input.
-loop(IO, Cols, String, Count) when Count >= Cols ->
-  do_fold(IO, Cols, String, Count);
 loop(IO, Cols, String, Count) ->
   ?DEBUG("loop: ~p~n", [{String, Count}]),
   receive
@@ -154,24 +153,27 @@ do_input(IO, Cols, String, Count, Data) ->
   ?DEBUG("input: ~p~n", [{String, Count, Data}]),
   request_flushline(),
   NewString = lists:append(String, Data),
-  case string:right(NewString, 1) of
-    "\n"    -> ?STDOUT(NewString),
-               ?MODULE:loop(IO, Cols, "", 0);
-    _Else   -> ?STDOUT(NewString),
-               ?MODULE:loop(IO, Cols, "", string:len(NewString))
+  NewCount = Count + string:len(Data),
+  Right = string:right(NewString, 1),
+  if NewCount >= 80     -> fold(IO, Cols, NewString, NewCount);
+     Right == "\n"      -> ?STDOUT(NewString),
+                           ?MODULE:loop(IO, Cols, "", 0);
+     true               -> ?STDOUT(NewString),
+                           ?MODULE:loop(IO, Cols, "", NewCount)
   end.
 
 % Fold lines that have reached maximum column length.
-do_fold(IO, Cols, String, Count) ->
+fold(IO, Cols, String, Count) ->
+  ?DEBUG("fold: ~s~n", [String]),
   {ok, MP} = re:compile("^(.*[\\ \\,])([^\\ \\,]*)\$"),
   String1 = string:substr(String, 1, Cols - (string:len(String) - Count)),
   String2 = string:substr(String, string:len(String1) + 1),
   case re:run(String1, MP, [{capture, [1,2], list}]) of
-    nomatch                 -> ?STDOUT("~s~n", [String]),
-                               ?MODULE:loop(IO, Cols, "", 0);
-    {match, [Above, Below]} -> ?STDOUT("~s~n", [Above]),
-                               NewString = lists:append(["   ",
-                                                         Below, String2]),
-                               ?MODULE:loop(IO, Cols, NewString,
-                                            string:len(NewString))
+    nomatch                 ->
+      ?STDOUT("~s~n", [String]),
+      ?MODULE:loop(IO, Cols, "", 0);
+    {match, [Above, Below]} ->
+      ?STDOUT("~s~n", [Above]),
+      NewString = lists:append(["   ", Below, String2]),
+      do_input(IO, Cols, NewString, string:len(NewString), "")
   end.
