@@ -58,6 +58,8 @@
 -import(string).
 -import(re).
 
+-import(io_lib).
+
 %%
 %% Exported functions
 %%
@@ -68,10 +70,10 @@
 -export([start/0, start/1, run/3]).
 
 % private callbacks
--export([do_run/2, until_flushline/2]).
+-export([do_run/2, until_flush/2]).
 
 % private fully-qualified loop
--export([loop/4]).
+-export([loop/3]).
 
 %%
 %% API functions
@@ -94,86 +96,82 @@ run(IO, ARG, ENV) -> gen_command:run(IO, ARG, ENV, ?MODULE).
 %%
 
 %% @private Callback entry point for io_server requests.
-until_flushline([], eof) -> {done, eof, []};
-until_flushline(ThisFar, eof) -> {done, ThisFar, eof};
-until_flushline(ThisFar, CharList) ->
-  case lists:splitwith(fun(X) -> X =/= $\n end, CharList) of
-    {Left, []}              -> {done, ThisFar ++ Left, []};
-    {Left, [$\n | Right]}   -> {done, ThisFar ++ Left ++ "\n", Right}
-  end.
+until_flush([], eof) -> {done, eof, []};
+until_flush(ThisFar, CharList) -> {done, ThisFar ++ CharList, []}.
 
-request_flushline() ->
-  until_flushline("", ""),
-  Request = {get_until, unicode, '', ?MODULE, until_flushline, []},
+request_flush() ->
+  Request = {get_until, unicode, '', ?MODULE, until_flush, []},
   user ! {io_request, self(), user, Request}.
 
 %% @private Callback entry point for gen_command behaviour.
 do_run(IO, _ARG) ->
-  ?DEBUG("Running folderl2 ~p~n", [self()]),
-  request_flushline(),
-  ?MODULE:loop(IO, 80, "", 0).
+  ?DEBUG("Running folderl ~p~n", [self()]),
+  request_flush(),
+  ?MODULE:loop(IO, 80, 0).
 
 %% @private Iterative loop for folding input.
-loop(IO, Cols, String, Count) ->
-  ?DEBUG("loop: ~p~n", [{String, Count}]),
+loop(IO, Cols, Count) ->
   receive
     {purging, _Pid, _Mod}                              ->
-      ?MODULE:loop(IO, Cols, String, Count);
+      ?MODULE:loop(IO, Cols, Count);
     {'EXIT', ExitPid, Reason}                          ->
-      do_exit(IO, Cols, String, Count, ExitPid, Reason);
+      do_exit(IO, Cols, Count, ExitPid, Reason);
     {io_reply, user, Reply}                            ->
-      do_input(IO, Cols, String, Count, Reply);
+      do_input(IO, Cols, Count, Reply);
     Noise                                              ->
       ?DEBUG("noise: ~p ~p~n", [Noise, self()]),
-      ?MODULE:loop(IO, Cols, String, Count)
-  after
-    100 -> ?STDOUT("~s", [String]),
-           ?MODULE:loop(IO, Cols, "", Count)
+      ?MODULE:loop(IO, Cols, Count)
   end.
 
 % Handle exit messages
-do_exit(IO, Cols, String, Count, ExitPid, Reason) ->
+do_exit(IO, Cols, Count, ExitPid, Reason) ->
   if ExitPid == IO#std.out,
      Reason == ok           -> exit(ok);
      ExitPid == IO#std.out  -> exit(Reason);
      true                   -> ?DEBUG("Saw ~p exit: ~p~n", [ExitPid, Reason]),
-                               ?MODULE:loop(IO, Cols, String, Count)
+                               ?MODULE:loop(IO, Cols, Count)
   end.
 
 % Handle input from io_server
-do_input(IO, Cols, String, Count, eof) ->
+do_input(IO, Cols, _Count, eof) ->
   ?DEBUG("eof\n"),
-  ?STDOUT(String),
-  do_exit(IO, Cols, String, Count, IO#std.in, ok);
-do_input(IO, Cols, String, Count, {error, Error}) ->
+  do_exit(IO, Cols, 0, IO#std.in, ok);
+do_input(IO, Cols, Count, {error, Error}) ->
   ?STDERR({?module, Error}),
-  request_flushline(),
-  ?MODULE:loop(IO, Cols, String, Count);
-do_input(IO, Cols, String, Count, Data) ->
-  ?DEBUG("input: ~p~n", [{String, Count, Data}]),
-  request_flushline(),
-  NewString = lists:append(String, Data),
-  NewCount = Count + string:len(Data),
-  Right = string:right(NewString, 1),
-  if NewCount >= 80     -> fold(IO, Cols, NewString, NewCount);
-     Right == "\n"      -> ?STDOUT(NewString),
-                           ?MODULE:loop(IO, Cols, "", 0);
-     true               -> ?STDOUT(NewString),
-                           ?MODULE:loop(IO, Cols, "", NewCount)
+  request_flush(),
+  ?MODULE:loop(IO, Cols, Count);
+do_input(IO, Cols, Count, Data) ->
+  ?DEBUG("input/4: ~p~n", [{Cols, Count, Data}]),
+  request_flush(),
+  case lists:splitwith(fun(X) -> X =/= $\n end, Data) of
+    {L, []}         -> do_input(IO, Cols, Count, no_eol, L);
+    {L, [$\n | R]}  -> do_input(IO, Cols, Count, R, L)
   end.
 
-% Fold lines that have reached maximum column length.
-fold(IO, Cols, String, Count) ->
+% Output each line of input, folding as necessary
+do_input(IO, Cols, Count, Buffer, Line) ->
+  ?DEBUG("input/5: ~p~n", [{Cols, Count, Line}]),
+  Length = string:len(Line) + Count,
+  if Length >= Cols -> {Row, Rest} = fold_line(Cols, Count, Line),
+                       ?STDOUT("~s~n", [Row]),
+                       do_input(IO, Cols, 0, Buffer, "   " ++ Rest);
+     true           -> case Buffer of
+                         no_eol -> ?STDOUT(Line),
+                                   ?MODULE:loop(IO, Cols, Length);
+                         []     -> ?STDOUT("~s~n", [Line]),
+                                   ?MODULE:loop(IO, Cols, 0);
+                         Else   -> ?STDOUT("~s~n", [Line]),
+                                   do_input(IO, Cols, 0, Else)
+                       end
+  end.
+
+% Fold line that has reached maximum column length.
+fold_line(Cols, Count, String) ->
   ?DEBUG("fold: ~s~n", [String]),
   {ok, MP} = re:compile("^(.*[\\ \\,])([^\\ \\,]*)\$"),
-  String1 = string:substr(String, 1, Cols - (string:len(String) - Count)),
+  String1 = string:substr(String, 1, Cols - Count),
   String2 = string:substr(String, string:len(String1) + 1),
   case re:run(String1, MP, [{capture, [1,2], list}]) of
-    nomatch                 ->
-      ?STDOUT("~s~n", [String]),
-      ?MODULE:loop(IO, Cols, "", 0);
-    {match, [Above, Below]} ->
-      ?STDOUT("~s~n", [Above]),
-      NewString = lists:append(["   ", Below, String2]),
-      do_input(IO, Cols, NewString, string:len(NewString), "")
+    nomatch                 -> {String1, String2};
+    {match, [Above, Below]} -> {Above, Below ++ String2}
   end.
