@@ -106,6 +106,10 @@ request_flush() ->
 %% @private Callback entry point for gen_command behaviour.
 do_run(IO, _ARG) ->
   ?DEBUG("Running folderl ~p~n", [self()]),
+  receive
+    {stdin, Stdin, eof} when Stdin == IO#std.in -> exit(ok)
+  after 100 -> true
+  end,
   request_flush(),
   ?MODULE:loop(IO, 80, 0).
 

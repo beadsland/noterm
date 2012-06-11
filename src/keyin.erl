@@ -91,6 +91,10 @@ run(IO, ARG, ENV) -> gen_command:run(IO, ARG, ENV, ?MODULE).
 %% @private Callback entry point for gen_command behaviour.
 do_run(IO, _ARG) ->
   ?DEBUG("Listening to keyboard ~p~n", [self()]),
+  receive
+    {stdin, Stdin, eof} when Stdin == IO#std.in -> exit(ok)
+  after 100 -> true
+  end,
   ?MODULE:loop(IO).
 
 %%
