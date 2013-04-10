@@ -1,7 +1,3 @@
-# -------------------
-# Makefile for noterm
-# -------------------
-
 # CDDL HEADER START
 # -----------------------------------------------------------------------
 # The contents of this file are subject to the Common Development and 
@@ -22,90 +18,20 @@
 # by brackets replaced by your own identifying information.
 # "Portions Copyright [year] [name of copyright owner]"
 # 
-# Copyright 2012 Beads D. Land-Trujillo.  All Rights Reserved
+# Copyright 2012, 2013 Beads D. Land-Trujillo.  All Rights Reserved.
 # -----------------------------------------------------------------------
 # CDDL HEADER END
 
-SHELL	= 	/bin/sh
+# -------------------
+# Makefile for noterm
+# -------------------
 
-ifeq ($(COMPUTERNAME),GOVMESH-BOOK)
-	DEV		=	yes
-else
-	DEV		=	no
-endif
-
-ifeq ($(shell which ping),/cygdrive/c/Windows/system32/ping)
-	PING	=	ping -n 1
-else
-	PING	=	ping -c1
-endif
-
-ONLINE	=	`$(PING) www.google.com 2>&1 >/dev/null; \
-			if [ "$$?" -eq "0" ]; then (echo yes); \
-			else (echo no); fi`
-TTY	=	`tty`
-
-
-SUCCINCT	=	grep -v "Entering directory" \
-				| grep -v "Leaving directory"
-CROWBAR		=	rebar _cmds_ | $(SUCCINCT) 
-
-POSE	=	-pa deps/pose/ebin
-ERL	=	erl -noshell -i deps $(POSE)
-POSURE	=	-s pose start posure
-SUPERL	=	-s pose start superl
-NOTERM	=	-s pose start noterm
-STOP	=	-s init stop
-
-BOOT	= 	echo Successful folderl load. | $(FOLD); echo $$?
-STRAP	=	cat
-
-FOLDERL	= 	$(ERL) -s pose start folderl $(STOP)
-FOLDTEST	= echo Fold | $(FOLD); echo $$?
-ifeq (`$(FOLDTEST)`,0)
-	FOLD	=  	$(FOLDERL)
-else
-	FOLD	=	cat
-endif
+include include/Header.mk
 
 #
-# Execution rules start
+# Run non-overridden common rules.
 #
-
-all:		current push-nosh noterm
-
-#
-# Build rules start
-#
-
-good:	compile
-	@$(ERL) $(SUPERL) $(POSURE) $(STOP)
-
-doc:	compile
 	
-compile:
-	@rm -f *.dump doc/*.md doc/*.html
-	@$(CROWBAR:_cmds_=compile doc)
-
-current:
-	@if [ "$(ONLINE)" == yes ]; then \
-		$(CROWBAR:_cmds_=update-deps compile doc); else \
-		$(CROWBAR:_cmds_=compile doc); fi
-
-clean: 		online
-	@if [ "$(ONLINE)" == yes ]; \
-		then (rm -rf deps; rebar clean get-deps | $(SUCCINCT)); \
-		else (rebar clean | $(SUCCINCT)); fi
-	
-online:	
-	@if [ "$(ONLINE)" == yes ]; \
-		then (echo "Working online"); \
-		else (echo "Working offline"); fi
-
-#
-# Development rules start
-#
-
-push:	online
-	@if [ "$(DEV)" == yes -a "$(ONLINE)" == yes ]; \
-			then (git push origin master); fi
+%::
+	@echo No custom target found
+	@$(COMMAKE)
