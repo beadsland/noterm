@@ -74,19 +74,6 @@ endif
 
 all:		current push-nosh noterm
 
-run:		compile noterm
-
-noterm:	nodump tabs
-	@if [ "$(TTY)" == "not a tty" ]; \
-		then ($(ERL) $(SUPERL) $(POSURE) $(NOTERM) echo $(STOP)); \
-		else ($(ERL) $(SUPERL) $(POSURE) $(NOTERM) $(STOP)); fi
-
-nodump:
-	@if [ -e erl_crash.dump ]; then (rm erl_crash.dump); fi
-
-tabs:
-	@if [ "$(TTY)" != "not a tty" ]; then (tabs -1 >/dev/null); fi
-
 #
 # Build rules start
 #
