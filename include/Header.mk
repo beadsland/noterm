@@ -18,7 +18,7 @@
 # by brackets replaced by your own identifying information.
 # "Portions Copyright [year] [name of copyright owner]"
 # 
-# Copyright 2012, 2013 Beads D. Land-Trujillo.  All Rights Reserved.
+# Copyright 2013 Beads D. Land-Trujillo.  All Rights Reserved.
 # -----------------------------------------------------------------------
 # CDDL HEADER END
 
@@ -83,7 +83,12 @@ GREP =		grep --line-buffered
 SUCCINCT =	$(GREP) -v "Entering directory" | $(GREP) -v "Leaving directory"
 FOLD = 		cat
 CROWBAR	=	$(SUBPASS) $(REBAR) _cmds_ | $(SUCCINCT) 2>&1 | $(FOLD)
-UNISON =	unison -batch -terse include/_mk_ ../nosh/include/_mk_
+
+#MERGE =		Name *.mk -> diff3 -m CURRENT1 CURRENTARCH CURRENT2 > NEW \
+#				|| echo Diff merge
+UNISON =	unison ./include ../nosh/include -batch -terse \
+				-ignore "Name *.hrl"
+#				-backupcurr "Name *" -merge "$(MERGE)"
 
 SUBMAKE		= $(MAKE) --no-print-directory _param_ \
 				IS_SUBMAKE=true PROD=$(PROD) $(SUBPASS)
@@ -103,7 +108,9 @@ endif
 ERL	=		erl -noshell -i $(DEPS) -deps $(DEPS) -pa $(POSEBIN)
 
 POSURE	=	-s pose start posure
-SUPERL	=	-s pose start superl
+ifndef SUPERL
+	SUPERL	=	-s pose start superl
+endif
 NOTERM	=	-s pose start noterm
 STOP	=	-s init stop
 
@@ -111,5 +118,9 @@ STOP	=	-s init stop
 # Todo logic pending proper 2do_go4 implementation
 #
 
-TODO_MORE =		`wc -l TODO.edoc | awk '{print $$1 - 7}'`
+ifeq ($(wildcard TODO.edoc),TODO.edoc)
+	TODO_MORE =	`wc -l TODO.edoc | awk '{print $$1 - 7}'`
+else
+	TODO_MORE =	0
+endif
 TODO_FILES =	TODO.edoc README.md doc/README.md doc/TODO_head.edoc

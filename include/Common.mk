@@ -32,10 +32,11 @@ include include/Header.mk
 
 all:		push compile good
 
-good:		
+good:		$(POSEBIN)/pose.beam
 	@$(ERL) $(SUPERL) $(POSURE) $(STOP)
 	
 $(POSEBIN)/pose.beam:
+	@if [ ! -f $(POSEBIN)/pose.beam ]
 	$(error Must compile pose to do good)
 
 #
@@ -51,11 +52,11 @@ todo:		README.md
 README.md:	neat doc/TODO_head.edoc
 	@$(CROWBAR:_cmds_=doc)
 
-doc/TODO_head.edoc:		TODO.edoc
-	@(head -7 TODO.edoc; \
-		if [ $(TODO_MORE) -gt 0 ]; \
-		then (echo "@todo ...plus $(TODO_MORE) more (see TODO.edoc)"); \
-		fi) > doc/TODO_head.edoc
+doc/TODO_head.edoc:
+	if [ $(TODO_MORE) -gt 0 ]; \
+		then (head -7 TODO.edoc; \
+			  echo "@todo ...plus $(TODO_MORE) more (see TODO.edoc)"); fi \
+		> doc/TODO_head.edoc
 
 #
 # Rules for compiling 
@@ -71,12 +72,12 @@ neat:
 # Rules for managing dependencies
 #
 
-current:
+current:	pose
 	@if [ "$(ONLINE)" == yes ]; \
 		then $(CROWBAR:_cmds_=update-deps compile doc); \
 		else $(CROWBAR:_cmds_=compile doc); fi
 
-clean:
+clean:		pose
 	@if [ "$(ONLINE)" == yes ]; \
 		then $(CROWBAR:_cmds_=delete-deps clean get-deps); \
 		else $(CROWBAR:_cmds_=clean); fi
@@ -85,11 +86,10 @@ clean:
 # Rules for managing revisions and synchronized common files
 #
 
-push:	make
+push:		make
 	@if [ "$(DEV)" == yes -a "$(ONLINE)" == yes ]; \
 		then (git push origin master); fi
-		
+
 make:
 	@if [ "$(shell basename $(CURDIR))" != nosh ]; \
-		then ($(UNISON:_mk_=Header.mk); \
-			  $(UNISON:_mk_=Common.mk)); fi
+		then $(UNISON); fi
