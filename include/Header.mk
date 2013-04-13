@@ -62,16 +62,10 @@ else
 	PING	=	ping -c1
 endif
 
-ONTEST	= $(PING) www.google.com 2>&1 >/dev/null; \
-		if [ "$$?" -eq "0" ]; then (echo yes); \
-		else (echo no); fi
-ONLINE	= $(shell $(ONTEST))
+ONTEST	= $(PING) www.google.com 2>&1 >/dev/null && echo online || echo offline
 
-ifeq ($(ONLINE)$(IS_SUBMAKE),yes)
-   $(info Working online)
-endif
-ifeq ($(ONLINE)$(IS_SUBMAKE),no)
-   $(info Working offline)
+ifneq ($(IS_SUBMAKE),true)
+   $(info Working $(shell $(ONTEST)))
 endif
 
 #
@@ -84,12 +78,14 @@ SUCCINCT =	$(GREP) -v "Entering directory" | $(GREP) -v "Leaving directory"
 FOLD = 		cat
 CROWBAR	=	$(SUBPASS) $(REBAR) _cmds_ | $(SUCCINCT) 2>&1 | $(FOLD)
 
-#MERGE =		Name *.mk -> diff3 -m CURRENT1 CURRENTARCH CURRENT2 > NEW \
-#				|| echo Diff merge
+B_PREFIX = 	.unison/
+B_SUFFIX =	.0.bak
+MERGE =		Name *.mk -> diff3 -m CURRENT1 CURRENTARCH CURRENT2 > NEW
 UNISON =	unison ./include ../nosh/include -batch -terse \
-				-ignore "Name *.hrl"
-#				-backupcurr "Name *" -merge "$(MERGE)"
-
+				-ignore "Name *.hrl" -ignore "Name .unison/*" \
+				-backupcurrent "Name *" -backuplocation local \
+				-backupprefix '$(B_PREFIX)' -backupsuffix '.$$VERSION.bak'
+				
 SUBMAKE		= $(MAKE) --no-print-directory _param_ \
 				IS_SUBMAKE=true PROD=$(PROD) $(SUBPASS)
 COMMAKE		= $(SUBMAKE:_param_=-f include/Common.mk $@)
@@ -101,6 +97,8 @@ COMMAKE		= $(SUBMAKE:_param_=-f include/Common.mk $@)
 ifndef DEPS
 	DEPS = 		deps
 endif
+SUBPASS =	DEPS="$(DEPS)"
+
 ifndef POSEBIN
 	POSEBIN = 	$(DEPS)/pose/ebin
 endif
@@ -123,4 +121,5 @@ ifeq ($(wildcard TODO.edoc),TODO.edoc)
 else
 	TODO_MORE =	0
 endif
-TODO_FILES =	TODO.edoc README.md doc/README.md doc/TODO_head.edoc
+TODO_FILES =	$(wildcard TODO.edoc) \
+					README.md doc/README.md doc/TODO_head.edoc
