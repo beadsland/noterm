@@ -24,20 +24,21 @@
 # -----------------------------------------------------------------------
 # CDDL HEADER END
 
-TTY	=	`tty`
+TTY=`tty`
 if [ "$(TTY)" != "not a tty" ]; 
 	then (tabs -1 >/dev/null); fi
 
 if [ -e erl_crash.dump ]; 
 	then (rm erl_crash.dump); fi
 
-POSE	=	-pa deps/pose/ebin
-ERL		=	erl -noshell -i deps $(POSE)
-POSURE	=	-s pose start posure
-SUPERL	=	-s pose start superl
-NOTERM	=	-s pose start noterm
-STOP	=	-s init stop
+POSE="-pa deps/pose/ebin"
+ERL="erl -noshell -i deps $POSE"
+POSURE="-s pose start posure"
+SUPERL="-s pose start superl"
+NOTERM="-s pose start noterm"
+STOP="-s init stop"
 
 if [ "$(TTY)" == "not a tty" ]; \
-	then ($(ERL) $(SUPERL) $(POSURE) $(NOTERM) echo $(STOP)); \
-	else ($(ERL) $(SUPERL) $(POSURE) $(NOTERM) $(STOP)); fi
+	then (ECHO=echo export ECHO); fi
+	
+$ERL $SUPERL $POSURE $NOTERM $ECHO $STOP
