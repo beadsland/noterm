@@ -1,8 +1,9 @@
-.project
-.settings
-doc
-!doc/*.md
-!doc/*.edoc
-ebin
-erl_crash.dump
-deps
+/.project
+/.settings
+/doc
+!/doc/*.md
+!/doc/*.edoc
+/ebin
+/erl_crash.dump
+/deps
+/include/.unison/*

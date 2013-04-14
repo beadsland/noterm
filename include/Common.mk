@@ -79,10 +79,10 @@ current:
 		then $(CROWBAR:_cmds_=update-deps compile doc); \
 		else $(CROWBAR:_cmds_=compile doc); fi
 
-clean:
+clean:	neat
 	@if [ "$(ONLINE)" == yes ]; \
-		then $(CROWBAR:_cmds_=delete-deps clean get-deps); \
-		else $(CROWBAR:_cmds_=clean); fi
+		then (rm -rf deps; $(CROWBAR:_cmds_=clean get-deps)); \
+		else ($(CROWBAR:_cmds_=clean)); fi
 
 #
 # Rules for managing revisions and synchronized common files
