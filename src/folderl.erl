@@ -54,11 +54,8 @@
 
 -import(gen_command).
 -import(lists).
--import(io).
 -import(string).
 -import(re).
-
--import(io_lib).
 
 %%
 %% Exported functions
