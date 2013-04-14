@@ -11,7 +11,7 @@ Line-folder for Erlang crashes and other multi-line output.
 
 Copyright (c) 2012 Beads D. Land-Trujillo
 
-__Version:__ 0.1.4
+__Version:__ 0.2.1
 
 __Behaviours:__ [`gen_command`](gen_command.md).
 
