@@ -18,18 +18,18 @@
 %% by brackets replaced by your own identifying information:
 %% "Portions Copyright [year] [name of copyright owner]"
 %%
-%% Copyright 2012 Beads D. Land-Trujillo.  All Rights Reserved
+%% Copyright 2012, 2013 Beads D. Land-Trujillo.  All Rights Reserved.
 %% -----------------------------------------------------------------------
 %% CDDL HEADER END
 
 %% @doc Line-folder for Erlang crashes and other multi-line output.
 %% @author Beads D. Land-Trujillo [http://twitter.com/beadsland]
-%% @copyright 2012 Beads D. Land-Trujillo
+%% @copyright 2012, 2013 Beads D. Land-Trujillo
 
 %% @todo Add line folding for Erlang terms.
 %% @todo Properly listen to pipelines (get keyboard if no pipe)
 
-%% @version 0.2.1
+%% @version 0.2.2
 
 -define(module, folderl).
 
@@ -43,7 +43,7 @@
 -endif.
 % END POSE PACKAGE PATTERN
 
--version("0.2.1").
+-version("0.2.2").
 
 %%
 %% Include files
@@ -104,7 +104,7 @@ request_flush() ->
 do_run(IO, _ARG) ->
   ?DEBUG("Running folderl ~p~n", [self()]),
   receive
-    {stdin, Stdin, eof} when Stdin == IO#std.in -> exit(ok)
+    {stdout, Stdin, eof} when Stdin == IO#std.in -> exit(ok)
   after 100 -> true
   end,
   request_flush(),

@@ -18,7 +18,7 @@
 %% by brackets replaced by your own identifying information:
 %% "Portions Copyright [year] [name of copyright owner]"
 %%
-%% Copyright 2012 Beads D. Land-Trujillo.  All Rights Reserved
+%% Copyright 2012, 2013 Beads D. Land-Trujillo.  All Rights Reserved.
 %% -----------------------------------------------------------------------
 %% CDDL HEADER END
 
@@ -26,7 +26,7 @@
 %% `stdout'.
 %% @end
 %% @author Beads D. Land-Trujillo [http://twitter.com/beadsland]
-%% @copyright 2012 Beads D. Land-Trujillo
+%% @copyright 2012, 2013 Beads D. Land-Trujillo
 
 %% @todo io:get_char (see code in jungerl)
 %% @todo implement as unique service
@@ -92,7 +92,7 @@ run(IO, ARG, ENV) -> gen_command:run(IO, ARG, ENV, ?MODULE).
 do_run(IO, _ARG) ->
   ?DEBUG("Listening to keyboard ~p~n", [self()]),
   receive
-    {stdin, Stdin, eof} when Stdin == IO#std.in -> exit(ok)
+    {stdout, Stdin, eof} when Stdin == IO#std.in -> exit(ok)
   after 100 -> true
   end,
   ?MODULE:loop(IO).
