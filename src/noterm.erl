@@ -104,7 +104,7 @@ do_run(IO, ARG, KeyPid) ->
   case ?ARGV(1) of
     echo    -> ?STDOUT("Shell echo flag enabled.\n"),
                NoshIO = ?IO(self(), self(), self(), true, true);
-    _Else   -> NoshIO = ?IO(self(), self(), self(), true)
+    _Else   -> NoshIO = ?IO(self(), true)
   end,
 
   Command = nosh,
