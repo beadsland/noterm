@@ -106,7 +106,7 @@ loop(IO) ->
   case io:get_line("") of
     ok              -> do_receive(IO);
     eof             -> do_stop(eof);
-    ".\n"           -> do_stop(eof);
+%    ".\n"           -> do_stop(eof); % moved to nosh via #std.stop
     {error, Reason} -> ?STDERR("error: ~p~n", [Reason]);
     Line            -> ?STDOUT(Line)
   end,
