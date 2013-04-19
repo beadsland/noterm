@@ -18,7 +18,7 @@
 %% by brackets replaced by your own identifying information:
 %% "Portions Copyright [year] [name of copyright owner]"
 %%
-%% Copyright 2012 Beads D. Land-Trujillo.  All Rights Reserved
+%% Copyright 2012, 2013 Beads D. Land-Trujillo.  All Rights Reserved.
 %% -----------------------------------------------------------------------
 %% CDDL HEADER END
 
@@ -28,7 +28,7 @@
 %% <i>Full terminal emulation has yet to be implemented.</i>
 %% @end
 %% @author Beads D. Land-Trujillo [http://twitter.com/beadsland]
-%% @copyright 2012 Beads D. Land-Trujillo
+%% @copyright 2012, 2013 Beads D. Land-Trujillo
 
 %% TODO: implement "echo" as dash-style option, not parameter
 %% TODO: escript and parameters (make it run like any other shell command)
@@ -46,8 +46,7 @@
 
 %-define(debug, true).
 -include_lib("pose/include/interface.hrl").
-
--include("macro.hrl").
+-include_lib("pose/include/macro.hrl").
 
 %%
 %% Exported functions
