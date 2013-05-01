@@ -4,6 +4,7 @@
 !/doc/*.md
 !/doc/*.edoc
 /ebin
-/erl_crash.dump
+/*.dump
+/*.stackdump
 /deps
 /include/.unison/*
