@@ -29,7 +29,7 @@
 %% @todo Add line folding for Erlang terms.
 %% @todo Properly listen to pipelines (get keyboard if no pipe)
 
-%% @version 0.2.2
+%% @version 0.2.3
 
 -define(module, folderl).
 
@@ -43,7 +43,7 @@
 -endif.
 % END POSE PACKAGE PATTERN
 
--version("0.2.2").
+-version("0.2.3").
 
 %%
 %% Include files
@@ -149,23 +149,27 @@ do_input(IO, Cols, Count, Data) ->
     {L, [$\n | R]}  -> do_input(IO, Cols, Count, R, L)
   end.
 
-% Output each line of input, folding as necessary
+% Figure out of lines are long enough to wrap.
 do_input(IO, Cols, Count, Buffer, Line) ->
   ?DEBUG("input/5: ~p~n", [{Cols, Count, Line}]),
   Length = string:len(Line) + Count,
-  if Length >= Cols -> {Row, Rest} = fold_line(Cols, Count, Line),
-                       ?STDOUT("~s~n", [Row]),
-                       do_input(IO, Cols, 0, Buffer, "   " ++ Rest);
-     true           -> case Buffer of
-                         no_eol -> ?STDOUT(Line),
-                                   ?MODULE:loop(IO, Cols, Length);
-                         []     -> ?STDOUT("~s~n", [Line]),
-                                   ?MODULE:loop(IO, Cols, 0);
-                         Else   -> ?STDOUT("~s~n", [Line]),
-                                   do_input(IO, Cols, 0, Else)
-                       end
-  end.
+  do_input(IO, Cols, Count, Buffer, Line, Length).
 
+% Output each line of input, folding as necessary.
+do_input(IO, Cols, Count, Buffer, Line, Length) when Length >= Cols ->
+  {Row, Rest} = fold_line(Cols, Count, Line),
+  ?STDOUT("~s~n", [Row]),
+  do_input(IO, Cols, 0, Buffer, "   " ++ Rest);
+do_input(IO, Cols, _Count, no_eol, Line, Length) ->
+  ?STDOUT(Line), 
+  ?MODULE:loop(IO, Cols, Length);
+do_input(IO, Cols, _Count, [], Line, _Length) ->
+  ?STDOUT("~s~n", [Line]), 
+  ?MODULE:loop(IO, Cols, 0);
+do_input(IO, Cols, _Count, Buffer, Line, _Length) ->
+  ?STDOUT("~s~n", [Line]), 
+  do_input(IO, Cols, 0, Buffer).
+  
 % Fold line that has reached maximum column length.
 fold_line(Cols, Count, String) ->
   ?DEBUG("fold: ~s~n", [String]),
