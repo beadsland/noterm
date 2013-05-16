@@ -36,9 +36,9 @@
 %% TODO: incorporate full terminfo/ncurses support
 %% TODO: notermd - telent/ssh access
 
-%% @version 0.1.6
+%% @version 0.1.7
 -module(noterm).
--version("0.1.6").
+-version("0.1.7").
 
 %%
 %% Include files
@@ -182,7 +182,7 @@ do_noise(IO, Noise) ->
   ?MODULE:loop(IO).
 
 grace(Message, Reason) ->
-  io:format(standard_error, "** ~s: ~s~n", [Message, ?FORMAT_ERLERR(Reason)]).
+  io:format(standard_error, "** ~s~n", [?FORMAT_ERLERR({Message, Reason})]).
 
 strip_escapes(Subject) ->
   {ok, MP} = re:compile("\e\[[\d,\s]+[A-Z]"),
