@@ -49,7 +49,7 @@
 %% Include files
 %%
 
-%-define(debug, true).
+-define(debug, true).
 -include_lib("pose/include/interface.hrl").
 
 % BEGIN POSE PACKAGE IMPORTS
@@ -181,6 +181,12 @@ fold_line(Cols, Count, String) ->
   String1 = string:substr(String, 1, Cols - Count),
   String2 = string:substr(String, string:len(String1) + 1),
   case re:run(String1, MP, [{capture, [1,2], list}]) of
-    nomatch                 -> {String1, String2};
-    {match, [Above, Below]} -> {Above, Below ++ String2}
+    nomatch                   -> {String1, String2};
+    {match, [Above, Below]}   -> fold_line(Cols, Count, Above, Below, String2)
+  end.
+
+fold_line(_Cols, _Count, Above, Below, String2) ->
+  case re:run(Above, "^\s*$", [{capture, none}]) of
+    nomatch -> {Above, Below ++ String2};
+    match   -> {Above ++ Below, String2}
   end.
