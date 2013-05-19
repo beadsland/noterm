@@ -87,8 +87,6 @@ run(IO, ARG, ENV) -> gen_command:run(IO, ARG, ENV, ?MODULE).
 do_run(IO, ARG) ->
   ?STDOUT("Starting Noterm ~s terminal emulator on ~p ~p~n",
           [?VERSION(?MODULE), node(), self()]),
-  error_logger:tty(false),
-
   Command = keyin,
   case gen_command:load_command(IO, Command) of
     {module, Module}    ->
