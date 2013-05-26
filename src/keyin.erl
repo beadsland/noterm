@@ -50,13 +50,6 @@
 %-define(debug, true).
 -include_lib("pose/include/interface.hrl").
 
-% BEGIN POSE PACKAGE IMPORTS
--ifdef(package).
--import(gen_command).
--import(io).
--endif.
-% END POSE PACKAGE IMPORTS
-
 %%
 %% Exported Functions
 %%
